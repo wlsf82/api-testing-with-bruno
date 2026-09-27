@@ -1,0 +1,413 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Emoji API",
+    "version": "1.0.0",
+    "description": "A small CRUD API for a catalog of emojis, built for the API Testing with Bruno course at Talking About Testing School. Reading is open to anyone; creating, replacing, updating, and deleting require a bearer token from POST /login. All data lives in memory, and restarting the API restores the 50 emojis it starts with.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Whether the API is up" },
+    { "name": "Authentication", "description": "Exchanging credentials for a token" },
+    { "name": "Emojis", "description": "Listing, reading, creating, updating, and deleting emojis" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Check that the API is up",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "The API is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": { "status": { "type": "string", "const": "ok" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Exchange a username and password for a bearer token",
+        "description": "Every login issues a new token. Tokens stay valid until the API restarts. The credentials are printed in the repository's README.",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Credentials" },
+              "example": { "username": "tester", "password": "bruno-rocks" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["token"],
+                  "properties": { "token": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "description": "Wrong username or password",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "invalid username or password" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/emojis": {
+      "get": {
+        "tags": ["Emojis"],
+        "summary": "List emojis, a page at a time",
+        "description": "Sorted by id. A page past the last one is not an error: it answers 200 with an empty emojis array. category and search combine.",
+        "operationId": "listEmojis",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Emojis per page",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Only emojis of this category",
+            "schema": { "$ref": "#/components/schemas/Category" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Only emojis whose name contains this text, ignoring case",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of emojis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmojiList" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "post": {
+        "tags": ["Emojis"],
+        "summary": "Create an emoji",
+        "description": "The emoji field must hold exactly one emoji and nothing else, and no other emoji may already use it. Fields other than emoji, name, and category are ignored.",
+        "operationId": "createEmoji",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmojiInput" },
+              "example": { "emoji": "🦖", "name": "t-rex", "category": "animals" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "description": "The path of the new emoji, such as /emojis/51",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Emoji" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/emojis/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "The emoji's id",
+          "schema": { "type": "integer", "minimum": 1 }
+        }
+      ],
+      "get": {
+        "tags": ["Emojis"],
+        "summary": "Read one emoji",
+        "operationId": "getEmoji",
+        "responses": {
+          "200": {
+            "description": "The emoji",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Emoji" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Emojis"],
+        "summary": "Replace an emoji",
+        "description": "A full replacement: emoji, name, and category are all required. Keeping the emoji's own value is not a conflict. Never creates: an unknown id answers 404.",
+        "operationId": "replaceEmoji",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmojiInput" },
+              "example": { "emoji": "🦕", "name": "sauropod", "category": "animals" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The replaced emoji",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Emoji" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "patch": {
+        "tags": ["Emojis"],
+        "summary": "Change some fields of an emoji",
+        "description": "Changes only the fields sent, which must include at least one of emoji, name, or category. The others stay as they were.",
+        "operationId": "updateEmoji",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmojiPatch" },
+              "example": { "name": "brontosaurus" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated emoji",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Emoji" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "tags": ["Emojis"],
+        "summary": "Delete an emoji",
+        "description": "Deleting an emoji that no longer exists answers 404.",
+        "operationId": "deleteEmoji",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": { "description": "Deleted, with no body" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A token from POST /login. Authentication is checked before the id and the body."
+      }
+    },
+    "schemas": {
+      "Category": {
+        "type": "string",
+        "enum": ["smileys", "animals", "food", "nature", "objects"]
+      },
+      "EmojiValue": {
+        "type": "string",
+        "description": "Exactly one emoji and nothing else, from Unicode's RGI emoji list. Emojis made of several code points count as one (👩‍💻, 👍🏽, 🇧🇷, 1️⃣). A letter, a bare digit, a text emoticon, two emojis, or an emoji with text or spaces around it are rejected.",
+        "examples": ["🦖", "👩‍💻", "👍🏽", "🇧🇷", "1️⃣"]
+      },
+      "Name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50,
+        "description": "Trimmed before it is checked and stored"
+      },
+      "Emoji": {
+        "type": "object",
+        "required": ["id", "emoji", "name", "category", "createdAt", "updatedAt"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "description": "Assigned by the API, never reused" },
+          "emoji": { "$ref": "#/components/schemas/EmojiValue" },
+          "name": { "$ref": "#/components/schemas/Name" },
+          "category": { "$ref": "#/components/schemas/Category" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Moves forward on every update, always later than before"
+          }
+        },
+        "example": {
+          "id": 13,
+          "emoji": "🐢",
+          "name": "turtle",
+          "category": "animals",
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z"
+        }
+      },
+      "EmojiInput": {
+        "type": "object",
+        "required": ["emoji", "name", "category"],
+        "properties": {
+          "emoji": { "$ref": "#/components/schemas/EmojiValue" },
+          "name": { "$ref": "#/components/schemas/Name" },
+          "category": { "$ref": "#/components/schemas/Category" }
+        }
+      },
+      "EmojiPatch": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "emoji": { "$ref": "#/components/schemas/EmojiValue" },
+          "name": { "$ref": "#/components/schemas/Name" },
+          "category": { "$ref": "#/components/schemas/Category" }
+        }
+      },
+      "EmojiList": {
+        "type": "object",
+        "required": ["emojis", "pageInfo"],
+        "properties": {
+          "emojis": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Emoji" }
+          },
+          "pageInfo": {
+            "type": "object",
+            "required": ["currentPage", "limit", "totalPages", "totalEmojis"],
+            "properties": {
+              "currentPage": { "type": "integer" },
+              "limit": { "type": "integer" },
+              "totalPages": { "type": "integer", "description": "totalEmojis divided by limit, rounded up; 0 when nothing matches" },
+              "totalEmojis": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "Credentials": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Something in the request is invalid",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "emoji must be a single emoji" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "No token, or a token the API does not know",
+        "headers": {
+          "WWW-Authenticate": { "schema": { "type": "string", "const": "Bearer" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "authentication required" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The emoji does not exist",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "emoji not found" }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Another emoji already uses this emoji",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "emoji already exists" }
+          }
+        }
+      }
+    }
+  }
+}
