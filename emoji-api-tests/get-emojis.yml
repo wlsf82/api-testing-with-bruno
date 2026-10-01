@@ -1,0 +1,29 @@
+info:
+  name: get-emojis
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:3001/emojis
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.emojis
+      operator: isArray
+    - expression: res.body.pageInfo
+      operator: isDefined
+    - expression: res.body.pageInfo.currentPage
+      operator: eq
+      value: "1"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
