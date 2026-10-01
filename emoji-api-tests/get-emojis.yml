@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:3001/emojis
+  url: "{{baseUrl}}/emojis"
   auth: inherit
 
 runtime:
