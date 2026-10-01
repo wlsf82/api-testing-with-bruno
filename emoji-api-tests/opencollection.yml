@@ -13,6 +13,11 @@ config:
         username: ""
         password: ""
       bypassProxy: ""
+
+request:
+  variables:
+    - name: defaultLimit
+      value: "10"
 bundled: false
 extensions:
   bruno:

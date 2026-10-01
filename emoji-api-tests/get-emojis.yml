@@ -5,7 +5,11 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/emojis"
+  url: "{{baseUrl}}/emojis?limit={{defaultLimit}}"
+  params:
+    - name: limit
+      value: "{{defaultLimit}}"
+      type: query
   auth: inherit
 
 runtime:
@@ -20,6 +24,9 @@ runtime:
     - expression: res.body.pageInfo.currentPage
       operator: eq
       value: "1"
+    - expression: res.body.emojis
+      operator: length
+      value: "10"
 
 settings:
   encodeUrl: true
