@@ -1,0 +1,43 @@
+info:
+  name: get-page-2-with-a-limit-of-5
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/emojis?page=2&limit=5"
+  params:
+    - name: page
+      value: "2"
+      type: query
+    - name: limit
+      value: "5"
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("totalPages agrees with totalEmojis and the limit",  () => {
+          const { pageInfo } = res.getBody()
+
+          expect(pageInfo.totalPages).to.equal(Math.ceil(pageInfo.totalEmojis / pageInfo.limit))
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.pageInfo.currentPage
+      operator: eq
+      value: "2"
+    - expression: res.body.emojis
+      operator: length
+      value: "5"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
