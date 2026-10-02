@@ -1,0 +1,38 @@
+info:
+  name: search-by-name
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/emojis?search=FACE"
+  params:
+    - name: search
+      value: FACE
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test('every emoji name is a face', () => {
+          const emojis = res.getBody().emojis
+          
+          emojis.forEach(({ name }) => {
+            expect(name.toLowerCase()).to.include('face')
+          })
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.emojis
+      operator: isNotEmpty
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
