@@ -15,9 +15,32 @@ config:
       bypassProxy: ""
 
 request:
+  auth:
+    type: bearer
+    token: "{{token}}"
   variables:
     - name: defaultLimit
       value: "10"
+  scripts:
+    - type: before-request
+      code: |-
+        if (req.getMethod() !== "GET") {
+          await bru.sendRequest(
+            {
+              method: "POST",
+              url: `${bru.getEnvVar("baseUrl")}/login`,
+              headers: { "Content-Type": "application/json" },
+              data: {
+                username: bru.getEnvVar("username"),
+                password: bru.getProcessEnv("API_PASSWORD")
+              }
+            },
+            function (err, response) {
+              if (err) throw err
+              bru.setVar("token", response.data.token)
+            }
+          )
+        }
 bundled: false
 extensions:
   bruno:
