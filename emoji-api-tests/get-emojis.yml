@@ -31,6 +31,22 @@ runtime:
           expect(totalPages).to.be.a('number')
           expect(totalEmojis).to.be.a('number')
         })
+
+        test('emojis prop types are correct', () => {
+          const emojis = res.getBody().emojis
+
+          emojis.forEach(({
+            id,
+            emoji,
+            name,
+            category
+          }) => {
+            expect(id).to.be.a('number')
+            expect(emoji).to.be.a('string')
+            expect(name).to.be.a('string')
+            expect(category).to.be.a('string')
+          })
+        })
   assertions:
     - expression: res.status
       operator: eq
