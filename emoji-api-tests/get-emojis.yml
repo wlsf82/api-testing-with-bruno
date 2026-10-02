@@ -13,6 +13,24 @@ http:
   auth: inherit
 
 runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test('pageInfo fields are numbers', () => {
+          const body = res.getBody()
+
+          const {
+            currentPage,
+            limit,
+            totalPages,
+            totalEmojis
+          } = body.pageInfo
+
+          expect(currentPage).to.be.a('number')
+          expect(limit).to.be.a('number')
+          expect(totalPages).to.be.a('number')
+          expect(totalEmojis).to.be.a('number')
+        })
   assertions:
     - expression: res.status
       operator: eq
