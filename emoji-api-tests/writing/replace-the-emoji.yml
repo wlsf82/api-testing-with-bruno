@@ -1,0 +1,54 @@
+info:
+  name: replace-the-emoji
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/emojis/{{emojiId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "🦕",
+        "name": "sauropod",
+        "category": "animals"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("createdAt did not change", function () {
+          expect(res.getBody().createdAt).to.equal(bru.getVar("emojiCreatedAt"))
+        })
+
+        test("updatedAt moved forward", function () {
+          const { createdAt, updatedAt } = res.getBody()
+
+          expect(new Date(updatedAt) > new Date(createdAt)).to.equal(true)
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.id
+      operator: eq
+      value: "{{emojiId}}"
+    - expression: res.body.emoji
+      operator: eq
+      value: 🦕
+    - expression: res.body.name
+      operator: eq
+      value: sauropod
+    - expression: res.body.category
+      operator: eq
+      value: animals
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

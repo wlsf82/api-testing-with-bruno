@@ -19,7 +19,9 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("emojiId", res.getBody().id)
+      code: |-
+        bru.setVar("emojiId", res.getBody().id)
+        bru.setVar("emojiCreatedAt", res.getBody().createdAt)
     - type: tests
       code: |-
         test("the Location header points at the new emoji", () => {
