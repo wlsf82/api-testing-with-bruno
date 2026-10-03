@@ -1,0 +1,37 @@
+info:
+  name: rename-the-emoji
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/emojis/{{emojiId}}"
+  body:
+    type: json
+    data: '{ "name": "brontosaurus" }'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.name
+      operator: eq
+      value: brontosaurus
+    - expression: res.body.emoji
+      operator: eq
+      value: 🦕
+    - expression: res.body.category
+      operator: eq
+      value: animals
+    - expression: res.body.id
+      operator: eq
+      value: "{{emojiId}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
