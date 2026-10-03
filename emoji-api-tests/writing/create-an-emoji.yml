@@ -1,0 +1,57 @@
+info:
+  name: create-an-emoji
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/emojis"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "🦖",
+        "name": "t-rex",
+        "category": "animals"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("emojiId", res.getBody().id)
+    - type: tests
+      code: |-
+        test("the Location header points at the new emoji", () => {
+          const { id } = res.getBody()
+
+          expect(res.getHeader("location")).to.equal(`/emojis/${id}`)
+        })
+
+        test('createdAt is equal to updatedAt', () => {
+          const { createdAt, updatedAt } = res.getBody()
+
+          expect(createdAt).to.eq(updatedAt)
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+    - expression: "res.body.id "
+      operator: isNumber
+    - expression: "res.body.emoji "
+      operator: eq
+      value: 🦖
+    - expression: "res.body.name "
+      operator: eq
+      value: t-rex
+    - expression: res.body.category
+      operator: eq
+      value: animals
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
