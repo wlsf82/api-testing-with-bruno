@@ -17,6 +17,14 @@ http:
   auth: inherit
 
 runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test('error message mentions emoji', () => {
+          const error = res.getBody().error
+
+          expect(error).include('emoji')
+        })
   assertions:
     - expression: res.status
       operator: eq
