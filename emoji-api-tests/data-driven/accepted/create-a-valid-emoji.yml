@@ -1,0 +1,39 @@
+info:
+  name: create-a-valid-emoji
+  type: http
+  seq: 1
+  tags:
+    - data-driven
+
+http:
+  method: POST
+  url: "{{baseUrl}}/emojis"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "{{emoji}}",
+        "name": "{{name}}",
+        "category": "{{category}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("createdEmojiId", res.getBody().id)
+    - type: tests
+      code: |-
+        const emoji = bru.runner.iterationData.get("emoji")
+
+        test(`creates ${emoji}`, () => {
+          expect(res.getStatus()).to.equal(201)
+          expect(res.getBody().emoji).to.equal(emoji)
+        })
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

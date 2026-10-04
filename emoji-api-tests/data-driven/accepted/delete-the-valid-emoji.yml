@@ -1,0 +1,24 @@
+info:
+  name: delete-the-valid-emoji
+  type: http
+  seq: 2
+  tags:
+    - data-driven
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/emojis/{{createdEmojiId}}"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "204"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
