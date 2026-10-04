@@ -1,0 +1,38 @@
+info:
+  name: create-with-an-invalid-emoji
+  type: http
+  seq: 1
+  tags:
+    - data-driven
+
+http:
+  method: POST
+  url: "{{baseUrl}}/emojis"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "{{input}}",
+        "name": "not an emoji",
+        "category": "smileys"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const input = bru.runner.iterationData.get("input")
+        const description = bru.runner.iterationData.get("description")
+
+        test(`rejects ${description}: ${input}`, function () {
+          expect(res.getStatus()).to.equal(400)
+          expect(res.getBody().error).to.include("emoji")
+        })
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
