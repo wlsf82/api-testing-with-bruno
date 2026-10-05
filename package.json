@@ -6,7 +6,11 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "pretest": "node -e \"require('fs').mkdirSync('reports', { recursive: true })\"",
+    "test": "cd emoji-api-tests && bru run --env local --exclude-tags data-driven --reporter-html ../reports/results.html --reporter-junit ../reports/results.xml",
+    "pretest:data-driven": "npm run pretest",
+    "test:data-driven": "cd emoji-api-tests && bru run data-driven/rejected --env local --csv-file-path data/invalid-emojis.csv --reporter-html ../reports/rejected.html && bru run data-driven/accepted --env local --csv-file-path data/valid-emojis.csv --reporter-html ../reports/accepted.html"
   },
   "engines": {
     "node": ">=20"
