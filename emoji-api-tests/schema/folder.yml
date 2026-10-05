@@ -1,0 +1,25 @@
+info:
+  name: schema
+  type: folder
+  seq: 8
+
+request:
+  auth: inherit
+  scripts:
+    - type: before-request
+      code: |-
+        const emojiSchema = {
+          type: "object",
+          required: ["id", "emoji", "name", "category", "createdAt", "updatedAt"],
+          additionalProperties: false,
+          properties: {
+            id: { type: "integer", minimum: 1 },
+            emoji: { type: "string", minLength: 1 },
+            name: { type: "string", minLength: 1, maxLength: 50 },
+            category: { enum: ["smileys", "animals", "food", "nature", "objects"] },
+            createdAt: { type: "string" },
+            updatedAt: { type: "string" }
+          }
+        }
+
+        bru.setVar("emojiSchema", emojiSchema)

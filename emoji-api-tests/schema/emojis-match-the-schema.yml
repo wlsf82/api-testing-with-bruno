@@ -1,0 +1,54 @@
+info:
+  name: emojis-match-the-schema
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/emojis?limit=50"
+  params:
+    - name: limit
+      value: "50"
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const tv4 = require("tv4")
+        const emojiSchema = bru.getVar("emojiSchema")
+
+        const listSchema = {
+          type: "object",
+          required: ["emojis", "pageInfo"],
+          properties: {
+            emojis: { type: "array", items: emojiSchema },
+            pageInfo: {
+              type: "object",
+              required: ["currentPage", "limit", "totalPages", "totalEmojis"],
+              properties: {
+                currentPage: { type: "integer" },
+                limit: { type: "integer" },
+                totalPages: { type: "integer" },
+                totalEmojis: { type: "integer" }
+              }
+            }
+          }
+        }
+
+        test("the response matches the list schema", () => {
+          const isValid = tv4.validate(res.getBody(), listSchema)
+          expect(isValid, JSON.stringify(tv4.error)).to.equal(true)
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
