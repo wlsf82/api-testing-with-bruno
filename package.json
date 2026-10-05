@@ -19,5 +19,8 @@
   },
   "allowScripts": {
     "@scarf/scarf": false
+  },
+  "devDependencies": {
+    "@usebruno/cli": "^4.2.0"
   }
 }
