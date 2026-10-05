@@ -1,0 +1,33 @@
+name: Bruno API Tests
+on:
+  push:
+    branches: [ main, master, final-solution ]
+  pull_request:
+    branches: [ main, master, final-solution ]
+jobs:
+  test:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Start the API
+        run: |
+          npm start &
+          curl --silent --retry 10 --retry-connrefused --retry-delay 1 http://localhost:3001/health
+      - name: Provide the password
+        run: echo "API_PASSWORD=${{ secrets.API_PASSWORD }}" > emoji-api-tests/.env
+      - name: Run the collection
+        run: npm test
+      - name: Run the data-driven requests
+        run: npm run test:data-driven
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: bruno-reports
+          path: reports/
+          retention-days: 30
