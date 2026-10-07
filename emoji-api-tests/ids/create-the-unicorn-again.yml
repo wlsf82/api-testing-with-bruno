@@ -1,0 +1,41 @@
+info:
+  name: create-the-unicorn-again
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/emojis"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "🦄",
+        "name": "unicorn",
+        "category": "animals"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar('secondId',res.getBody().id)
+    - type: tests
+      code: |-
+        test("a deleted id is never handed out again", function () {
+          const { id } = res.getBody()
+
+          expect(id).to.not.equal(bru.getVar("firstId"))
+          expect(id).to.be.greaterThan(bru.getVar("firstId"))
+        })
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

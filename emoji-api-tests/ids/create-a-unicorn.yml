@@ -1,0 +1,33 @@
+info:
+  name: create-a-unicorn
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/emojis"
+  body:
+    type: json
+    data: |-
+      {
+        "emoji": "🦄",
+        "name": "unicorn",
+        "category": "animals"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar('firstId',res.getBody().id)
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
